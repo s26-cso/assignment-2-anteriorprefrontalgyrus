@@ -1,120 +1,125 @@
-.section __TEXT,__cstring
+.section .rodata
 default_file: .asciz "input.txt"
 mode:         .asciz "r"
 yes_str:      .asciz "Yes\n"
 no_str:       .asciz "No\n"
 err_str:      .asciz "Error opening file\n"
 
-	.text
-	.globl _main
+.text
+.globl main
 
-_main:
-	pushq %rbp
-	movq %rsp, %rbp
-	subq $48, %rsp              
+main:
+	addi sp, sp, -48
+	sd ra, 40(sp)
+	sd s0, 32(sp)
+	sd s1, 24(sp)
+	sd s2, 16(sp)
+	sd s3, 8(sp)
+	sd s4, 0(sp)
 
-	movq $0, -8(%rbp)           
-	movl $1, -32(%rbp)          
+	addi s0, x0, 0
+	addi s1, x0, 1
 
-	cmpl $2, %edi               
-	jl L_use_default
-	movq 8(%rsi), %rdi          
-	jmp L_do_open
+	addi t0, x0, 2
+	blt a0, t0, L_use_default
+	ld a0, 8(a1)
+	jal x0, L_do_open
 
 L_use_default:
-	leaq default_file(%rip), %rdi 
+	lui a0, %hi(default_file)
+	addi a0, a0, %lo(default_file)
 
 L_do_open:
-	leaq mode(%rip), %rsi
-	call _fopen
-	testq %rax, %rax
-	jz L_err
-	movq %rax, -8(%rbp)         
+	lui a1, %hi(mode)
+	addi a1, a1, %lo(mode)
+	jal ra, fopen
+	beq a0, x0, L_err
+	addi s0, a0, 0
 
-	movq -8(%rbp), %rdi
-	xorq %rsi, %rsi
-	movl $2, %edx               
-	call _fseek
+	addi a0, s0, 0
+	addi a1, x0, 0
+	addi a2, x0, 2
+	jal ra, fseek
 
-	movq -8(%rbp), %rdi
-	call _ftell
-	movq %rax, -24(%rbp)        
+	addi a0, s0, 0
+	jal ra, ftell
+	addi s3, a0, 0
 
-	testq %rax, %rax
-	jz L_yes_exit
+	beq s3, x0, L_yes_exit
 
-	decq -24(%rbp)              
-	movq -8(%rbp), %rdi
-	movq -24(%rbp), %rsi
-	movl $0, %edx               
-	call _fseek
-	movq -8(%rbp), %rdi
-	call _fgetc
-	cmpl $10, %eax              
-	jne L_init_loop
-	decq -24(%rbp)              
+	addi s3, s3, -1
+	addi a0, s0, 0
+	addi a1, s3, 0
+	addi a2, x0, 0
+	jal ra, fseek
+	
+	addi a0, s0, 0
+	jal ra, fgetc
+	addi t0, x0, 10
+	bne a0, t0, L_init_loop
+	addi s3, s3, -1
 
 L_init_loop:
-	movq $0, -16(%rbp)          
+	addi s2, x0, 0
 
 L_loop:
-	movq -16(%rbp), %rcx        
-	movq -24(%rbp), %rdx        
-	cmpq %rdx, %rcx
-	jge L_yes_exit              
+	bge s2, s3, L_yes_exit
 
-	# Read Left
-	movq -8(%rbp), %rdi
-	movq -16(%rbp), %rsi
-	movl $0, %edx
-	call _fseek
-	movq -8(%rbp), %rdi
-	call _fgetc
-	movl %eax, -28(%rbp)        
+	addi a0, s0, 0
+	addi a1, s2, 0
+	addi a2, x0, 0
+	jal ra, fseek
+	
+	addi a0, s0, 0
+	jal ra, fgetc
+	addi s4, a0, 0
 
-	# Read Right
-	movq -8(%rbp), %rdi
-	movq -24(%rbp), %rsi
-	movl $0, %edx
-	call _fseek
-	movq -8(%rbp), %rdi
-	call _fgetc                 
+	addi a0, s0, 0
+	addi a1, s3, 0
+	addi a2, x0, 0
+	jal ra, fseek
+	
+	addi a0, s0, 0
+	jal ra, fgetc
 
-	# Compare
-	movl -28(%rbp), %ecx        
-	cmpl %eax, %ecx
-	jne L_no_exit               
+	bne s4, a0, L_no_exit
 
-	incq -16(%rbp)
-	decq -24(%rbp)
-	jmp L_loop
+	addi s2, s2, 1
+	addi s3, s3, -1
+	jal x0, L_loop
 
 L_yes_exit:
-	leaq yes_str(%rip), %rdi
-	xorl %eax, %eax
-	call _printf
-	movl $0, -32(%rbp)          
-	jmp L_cleanup
+	lui a0, %hi(yes_str)
+	addi a0, a0, %lo(yes_str)
+	jal ra, printf
+	addi s1, x0, 0
+	jal x0, L_cleanup
 
 L_no_exit:
-	leaq no_str(%rip), %rdi
-	xorl %eax, %eax
-	call _printf
-	movl $1, -32(%rbp)          
-	jmp L_cleanup
+	lui a0, %hi(no_str)
+	addi a0, a0, %lo(no_str)
+	jal ra, printf
+	addi s1, x0, 1
+	jal x0, L_cleanup
 
 L_err:
-	leaq err_str(%rip), %rdi
-	xorl %eax, %eax
-	call _printf
+	lui a0, %hi(err_str)
+	addi a0, a0, %lo(err_str)
+	jal ra, printf
 
 L_cleanup:
-	movq -8(%rbp), %rdi
-	testq %rdi, %rdi            
-	jz L_finish
-	call _fclose
+	beq s0, x0, L_finish
+	addi a0, s0, 0
+	jal ra, fclose
 
 L_finish:
-	movl -32(%rbp), %eax        
-	leave
-	ret
+	addi a0, s1, 0
+	ld ra, 40(sp)
+	ld s0, 32(sp)
+	ld s1, 24(sp)
+	ld s2, 16(sp)
+	ld s3, 8(sp)
+	ld s4, 0(sp)
+	addi sp, sp, 48
+	jalr x0, ra, 0
+	
