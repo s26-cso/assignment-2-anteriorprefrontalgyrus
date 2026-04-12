@@ -4,6 +4,8 @@
 .globl get
 .globl getAtMost
 
+# functions as given in problem statement 
+
 make_node:
 	addi sp, sp, -16
 	sd ra, 8(sp)
