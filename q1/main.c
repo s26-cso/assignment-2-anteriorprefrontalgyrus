@@ -1,11 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 struct Node {
     int val;
     struct Node *left;
     struct Node *right;
 };
+
+
+_Static_assert(offsetof(struct Node, val) == 0, "Node.val offset must be 0");
+_Static_assert(offsetof(struct Node, left) == 8, "Node.left offset must be 8");
+_Static_assert(offsetof(struct Node, right) == 16, "Node.right offset must be 16");
+_Static_assert(sizeof(struct Node) == 24, "sizeof(Node) must be 24");
 
 struct Node *make_node(int val);
 struct Node *insert(struct Node *root, int val);
@@ -29,7 +36,7 @@ static void free_tree(struct Node *root) {
 int main(void) {
     struct Node *root = NULL;
 
-    int values[] = {50, 20, 70, 10, 30, 60, 80, 20};
+    int values[] = {200, 5, 67, 76, 809, 10, 30, 150, 1, 70, 80};
     size_t n = sizeof(values) / sizeof(values[0]);
 
     for (size_t i = 0; i < n; i++) {
