@@ -1,5 +1,6 @@
 .section .rodata
-format_str: .asciz "%d "
+fmt_first:  .asciz "%d"
+fmt_rest:   .asciz " %d"
 newline_str: .asciz "\n"
 
 .text
@@ -30,6 +31,7 @@ main:
 	slli t1, s2, 2
 	add a0, t0, t1
 	jal ra, malloc
+	beq a0, x0, L_end      
 	addi s3, a0, 0
 
 	addi s4, x0, 0
@@ -109,10 +111,18 @@ L_print_loop:
 	add t0, s5, t0
 	lw a1, 0(t0)
 
-	lui a0, %hi(format_str)
-	addi a0, a0, %lo(format_str)
+	beq s4, x0, L_print_first
+	lui a0, %hi(fmt_rest)
+	addi a0, a0, %lo(fmt_rest)
+	jal ra, printf
+	jal x0, L_print_after
+
+L_print_first:
+	lui a0, %hi(fmt_first)
+	addi a0, a0, %lo(fmt_first)
 	jal ra, printf
 
+L_print_after:
 	addi s4, s4, 1
 	jal x0, L_print_loop
 L_print_done:
