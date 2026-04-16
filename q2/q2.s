@@ -112,14 +112,12 @@ L_print_loop:
 	lw a1, 0(t0)
 
 	beq s4, x0, L_print_first
-	lui a0, %hi(fmt_rest)
-	addi a0, a0, %lo(fmt_rest)
+	la a0, fmt_rest
 	jal ra, printf
 	jal x0, L_print_after
 
 L_print_first:
-	lui a0, %hi(fmt_first)
-	addi a0, a0, %lo(fmt_first)
+	la a0, fmt_first
 	jal ra, printf
 
 L_print_after:
@@ -127,8 +125,7 @@ L_print_after:
 	jal x0, L_print_loop
 L_print_done:
 
-	lui a0, %hi(newline_str)
-	addi a0, a0, %lo(newline_str)
+	la a0, newline_str
 	jal ra, printf
 
 	addi a0, s3, 0
